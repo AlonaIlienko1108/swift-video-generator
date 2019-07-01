@@ -132,7 +132,7 @@ public class VideoGenerator: NSObject {
           if videoWriter.startWriting() {
             
             /// if it is possible set the start time of the session (current at the begining)
-            videoWriter.startSession(atSourceTime: CMTime.zero)
+            videoWriter.startSession(atSourceTime: kCMTimeZero)
             
             /// check that the pixel buffer pool has been created
             assert(pixelBufferAdaptor.pixelBufferPool != nil)
@@ -484,17 +484,17 @@ public class VideoGenerator: NSObject {
     
     if let aVideoAssetTrack: AVAssetTrack = aVideoAsset.tracks(withMediaType: .video).first, let aAudioAssetTrack: AVAssetTrack = aAudioAsset.tracks(withMediaType: .audio).first {
       do {
-        try mutableCompositionVideoTrack.first?.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: aVideoAssetTrack.timeRange.duration), of: aVideoAssetTrack, at: CMTime.zero)
-        try mutableCompositionAudioTrack.first?.insertTimeRange(CMTimeRangeMake(start: CMTime.zero, duration: aVideoAssetTrack.timeRange.duration), of: aAudioAssetTrack, at: CMTime.zero)
+        try mutableCompositionVideoTrack.first?.insertTimeRange(CMTimeRangeMake(kCMTimeZero, aVideoAssetTrack.timeRange.duration), of: aVideoAssetTrack, at: kCMTimeZero)
+        try mutableCompositionAudioTrack.first?.insertTimeRange(CMTimeRangeMake(kCMTimeZero, aVideoAssetTrack.timeRange.duration), of: aAudioAssetTrack, at: kCMTimeZero)
       } catch{
         print(error)
       }
       
-      totalVideoCompositionInstruction.timeRange = CMTimeRangeMake(start: CMTime.zero,duration: aVideoAssetTrack.timeRange.duration)
+        totalVideoCompositionInstruction.timeRange = CMTimeRangeMake(kCMTimeZero, aVideoAssetTrack.timeRange.duration)
     }
     
     let mutableVideoComposition: AVMutableVideoComposition = AVMutableVideoComposition()
-    mutableVideoComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
+    mutableVideoComposition.frameDuration = CMTimeMake(1, 30)
     mutableVideoComposition.renderSize = CGSize(width: 1280, height: 720)
     
     if let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first {
@@ -574,7 +574,12 @@ public class VideoGenerator: NSObject {
       
       for _image in _images {
         autoreleasepool {
-          if let imageData = _image.scaleImageToSize(newSize: CGSize(width: videoImageWidthForMultipleVideoGeneration, height: videoImageWidthForMultipleVideoGeneration))?.pngData() {
+           if let imageData = _image
+            .scaleImageToSize(
+newSize: CGSize(
+                width: videoImageWidthForMultipleVideoGeneration,
+                height: videoImageWidthForMultipleVideoGeneration))
+            .flatMap(UIImagePNGRepresentation) {
             datasImages.append(imageData)
           }
         }
@@ -692,7 +697,7 @@ public class VideoGenerator: NSObject {
       
       /// create a video asset from the url and get the video time range
       let videoAsset = AVURLAsset(url: videoUrl, options: nil)
-      let videoTimeRange = CMTimeRange(start: CMTime.zero, duration: videoAsset.duration)
+      let videoTimeRange = CMTimeRange(start: kCMTimeZero, duration: videoAsset.duration)
       
       /// add a video track to the composition
       let videoComposition = mixComposition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
@@ -700,7 +705,7 @@ public class VideoGenerator: NSObject {
       if let videoTrack = videoAsset.tracks(withMediaType: .video).first {
         do {
           /// try to insert the video time range into the composition
-          try videoComposition?.insertTimeRange(videoTimeRange, of: videoTrack, at: CMTime.zero)
+            try videoComposition?.insertTimeRange(videoTimeRange, of: videoTrack, at: kCMTimeZero)
         } catch {
           failure(error)
         }
@@ -715,7 +720,7 @@ public class VideoGenerator: NSObject {
           let audioDuration = CMTime(seconds: self?.audioDurations[index] ?? 0.0, preferredTimescale: 1)
           
           let audioAsset = AVURLAsset(url: audioUrl)
-          let audioTimeRange = CMTimeRange(start: CMTime.zero, duration: self?.maxVideoLengthInSeconds != nil ? audioDuration : audioAsset.duration)
+          let audioTimeRange = CMTimeRange(start: kCMTimeZero, duration: self?.maxVideoLengthInSeconds != nil ? audioDuration : audioAsset.duration)
           
           let shouldAddAudioTrack = self?.maxVideoLengthInSeconds != nil ? audioDuration.seconds > 0 : true
           
@@ -915,7 +920,7 @@ public class VideoGenerator: NSObject {
                       for dictionary in passDictionaries.reversed() {
                         if let passStartTime = dictionary["passStartTime"] as? CMTime, let passEndTime = dictionary["passEndTime"] as? CMTime {
                           let passDuration = CMTimeSubtract(passEndTime, passStartTime)
-                          let timeRange = CMTimeRangeMake(start: passStartTime, duration: passDuration)
+                            let timeRange = CMTimeRangeMake(passStartTime, passDuration)
                           
                           while readerOutput.copyNextSampleBuffer() != nil { }
                           
